@@ -1,10 +1,10 @@
 ﻿{
-  "id": "testmod",
-  "name": "Test Mod",
-  "version": "0.1.0",
-  "authors": "Author",
-  "description": "Put a neat description here",
-  "tags": [],
+  "id": "alduris.dropwigs",
+  "name": "Dropwig Randomizer",
+  "version": "1.0",
+  "authors": "Alduris",
+  "description": "Adds 50 dropwigs to a random room each cycle",
+  "tags": ["Creatures", "Game Mechanics"],
   "requirements": [],
   "requirements_names": [],
   "checksum_override_version": false
