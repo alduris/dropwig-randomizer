@@ -77,7 +77,11 @@ sealed class Plugin : BaseUnityPlugin
 
         if (selectedRegion != null && game != null && game.IsStorySession && string.Equals(name, selectedRegion, System.StringComparison.InvariantCultureIgnoreCase))
         {
+#if !DEBUG
             self.worldProcesses.Add(new DropwigSpawner(self, this));
+#else
+            self.worldProcesses.Add(new DemoSpawner(self));
+#endif
         }
     }
 
@@ -101,12 +105,46 @@ sealed class Plugin : BaseUnityPlugin
                     {
                         var node = possibleNodes[Random.Range(0, possibleNodes.Length)];
                         var coord = new WorldCoordinate(room.index, -1, -1, node);
-                        var crit = new AbstractCreature(world, StaticWorld.GetCreatureTemplate(CreatureTemplate.Type.DropBug), null, coord, world.game.GetNewID());
-                        crit.saveCreature = false;
+                        var crit = new AbstractCreature(world, StaticWorld.GetCreatureTemplate(CreatureTemplate.Type.DropBug), null, coord, world.game.GetNewID())
+                        {
+                            saveCreature = false
+                        };
                         room.AddEntity(crit);
                     }
                 }
                 plugin.hasSpawned = true;
+            }
+        }
+    }
+
+    private class DemoSpawner(World world) : World.WorldProcess(world)
+    {
+        // Since this class is a copy purely for testing in specific rooms, we don't care about having the region loaded multiple times
+        private bool spawned = false;
+
+        public override void Update()
+        {
+            base.Update();
+
+            if (!spawned)
+            {
+                spawned = true;
+                var room = world.abstractRooms.FirstOrDefault(x => x.name == "SU_B02");
+                if (room != null)
+                {
+                    var possibleNodes = room.nodes.Select((node, i) => node.type == AbstractRoomNode.Type.Den ? i : -1).Where(x => x > -1).ToArray();
+                    int toSpawn = 50;
+                    for (int i = 0; i < toSpawn; i++)
+                    {
+                        var node = possibleNodes[Random.Range(0, possibleNodes.Length)];
+                        var coord = new WorldCoordinate(room.index, -1, -1, node);
+                        var crit = new AbstractCreature(world, StaticWorld.GetCreatureTemplate(CreatureTemplate.Type.DropBug), null, coord, world.game.GetNewID())
+                        {
+                            saveCreature = false
+                        };
+                        room.AddEntity(crit);
+                    }
+                }
             }
         }
     }
