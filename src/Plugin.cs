@@ -13,7 +13,7 @@ using Watcher;
 
 namespace DropwigRandomizer;
 
-[BepInPlugin("alduris.dropwigs", "Dropwig Randomizer", "1.0")]
+[BepInPlugin("alduris.dropwigs", "Dropwig Randomizer", "1.0.1")]
 sealed class Plugin : BaseUnityPlugin
 {
     public static new ManualLogSource Logger;
@@ -45,7 +45,13 @@ sealed class Plugin : BaseUnityPlugin
         if (game.IsStorySession)
         {
             hasSpawned = false;
-            var regions = GetSlugcatRegions(game.StoryCharacter);
+            List<string> regions = Options.DropwigSpawnMode.Value switch
+            {
+                Options.SpawnMode.CurrentRegion or Options.SpawnMode.EveryRegion => [null],
+                Options.SpawnMode.StoryRegions => GetSlugcatRegions(game.StoryCharacter),
+                Options.SpawnMode.AnyRegion => Region.GetFullRegionOrder(null),
+                _ => throw new System.NotImplementedException(),
+            };
             if (regions.Count > 0)
                 selectedRegion = regions[Random.Range(0, regions.Count)];
             else
@@ -75,10 +81,25 @@ sealed class Plugin : BaseUnityPlugin
     {
         orig(self, game, region, name, singleRoomWorld);
 
-        if (selectedRegion != null && game != null && game.IsStorySession && string.Equals(name, selectedRegion, System.StringComparison.InvariantCultureIgnoreCase))
+        var spawnMode = Options.DropwigSpawnMode.Value;
+
+        if (spawnMode == Options.SpawnMode.EveryRegion)
         {
+            hasSpawned = false;
+            selectedRegion = null;
+        }
+
+        if (!hasSpawned && game != null && game.IsStorySession && !singleRoomWorld)
+        {
+            if ((spawnMode == Options.SpawnMode.CurrentRegion && selectedRegion == null) || spawnMode == Options.SpawnMode.EveryRegion)
+            {
+                selectedRegion = name;
+            }
 #if !DEBUG
-            self.worldProcesses.Add(new DropwigSpawner(self, this));
+            if (selectedRegion != null && string.Equals(name, selectedRegion, System.StringComparison.InvariantCultureIgnoreCase))
+            {
+                self.worldProcesses.Add(new DropwigSpawner(self, this));
+            }
 #else
             self.worldProcesses.Add(new DemoSpawner(self));
 #endif
@@ -94,7 +115,9 @@ sealed class Plugin : BaseUnityPlugin
             base.Update();
             if (!plugin.hasSpawned)
             {
-                var rooms = world.abstractRooms.Where(room => room.nodes.Any(node => node.type == AbstractRoomNode.Type.Den)).ToArray();
+                var rooms = world.abstractRooms
+                    .Where(room => !room.gate && !room.shelter && !room.offScreenDen && room.nodes.Any(node => node.type == AbstractRoomNode.Type.Den))
+                    .ToArray();
                 if (rooms.Length > 0)
                 {
                     var room = rooms[Random.Range(0, rooms.Length)];

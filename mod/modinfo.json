@@ -1,9 +1,9 @@
 ﻿{
   "id": "alduris.dropwigs",
   "name": "Dropwig Randomizer",
-  "version": "1.0",
+  "version": "1.0.1",
   "authors": "Alduris",
-  "description": "Adds 50 dropwigs to a random room each cycle",
+  "description": "Adds a shit ton of dropwigs to a random room each cycle",
   "tags": ["Creatures", "Game Mechanics"],
   "requirements": [],
   "requirements_names": [],
