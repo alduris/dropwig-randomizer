@@ -1,5 +1,7 @@
 ﻿using System;
+using Menu;
 using Menu.Remix.MixedUI;
+using Menu.Remix.MixedUI.ValueTypes;
 using RWCustom;
 using UnityEngine;
 
@@ -46,23 +48,30 @@ namespace DropwigRandomizer
                 modePickerLabel = new OpLabel(new Vector2(368f, 228f), new Vector2(232f, 24f), DescriptionForMode(DropwigSpawnMode.Value), FLabelAlignment.Left, false) { verticalAlignment = OpLabel.LabelVAlignment.Center }
                 );
 
+            UpdateDraggerColor();
+            dragger.OnValueUpdate += (_, _, _) => UpdateDraggerColor();
             modePicker.OnValueUpdate += (_, _, _) => modePickerLabel.text = DescriptionForMode((SpawnMode)Enum.Parse(typeof(SpawnMode), modePicker.value));
+
+            void UpdateDraggerColor()
+            {
+                float ominous1 = Mathf.InverseLerp(100f, 999f, dragger.GetValueInt());
+                float ominous2 = Mathf.InverseLerp(200f, 999f, dragger.GetValueInt());
+                float ominous3 = Mathf.InverseLerp(400f, 999f, dragger.GetValueInt());
+                dragger.colorEdge = Color.Lerp(MenuColorEffect.rgbMediumGrey, Color.red, ominous1);
+                dragger.colorText = Color.Lerp(MenuColorEffect.rgbMediumGrey, Color.red, ominous2);
+                dragger.colorFill = Color.Lerp(MenuColorEffect.rgbBlack, Color.red, ominous3 * 0.25f);
+            }
 
             static string DescriptionForMode(SpawnMode mode)
             {
-                switch (mode)
+                return mode switch
                 {
-                    case SpawnMode.CurrentRegion:
-                        return "Where your save is located.";
-                    case SpawnMode.StoryRegions:
-                        return "Story or optional regions.";
-                    case SpawnMode.AnyRegion:
-                        return "Any region. At all.";
-                    case SpawnMode.EveryRegion:
-                        return "You should be scared.";
-                    default:
-                        return "";
-                }
+                    SpawnMode.CurrentRegion => "Where your save is located.",
+                    SpawnMode.StoryRegions => "Story or optional regions.",
+                    SpawnMode.AnyRegion => "Any region. At all.",
+                    SpawnMode.EveryRegion => "You should be scared.",
+                    _ => "",
+                };
             }
         }
 
